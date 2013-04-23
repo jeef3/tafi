@@ -1,0 +1,27 @@
+{
+  "name": "tafi",
+  "title": "Tafi",
+  "description": "The advanced formatted input.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/jeef3/tafi",
+  "author": {
+    "name": "Jeff Knaggs",
+    "email": "mail@jeef3.com",
+    "url": "jeffkcreative.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jeef3/tafi.git"
+  },
+  "bugs": "https://github.com/jeef3/tafi/issues",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/jeef3/tafi/blob/master/LICENSE-MIT"
+    }
+  ],
+  "dependencies": {
+    "jquery": "*"
+  },
+  "keywords": []
+}
