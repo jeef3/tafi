@@ -1,4 +1,4 @@
-# Tafi
+# Tafi [![Build Status](https://travis-ci.org/jeef3/tafi.png?branch=master)](https://travis-ci.org/jeef3/tafi)
 
 The advanced formatted input.
 
