@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+    <title>Tafi</title>
+
+    <script src="jquery/jquery.js"></script>
+</head>
+
+<body>
+    <label for="test-input">Document Number</label>
+    <input id="test-input"
+            type="text"
+            required="required"
+            placeholder="Document Number"
+            name="document-number"
+            class="input">
+
+    <script src="tafi.js"></script>
+    <script>
+        $(function () {
+            $("#test-input").tafi();
+        });
+    </script>
+</body>
+</html>
