@@ -18,13 +18,13 @@
     this.options = _rehydrateOptions(settings.options);
     this.partials = settings.partials || {};
 
-    this.decision(_findDecision(settings.path));
+    this.decision(_findDecision(settings.path, this.options));
   }
 
   Tafi.prototype.initElements = function ($element) {
 
     // Container
-    this.$container = $("div", {
+    this.$container = $("<div />", {
       id: $element.attr("id"),
       "class": $element.attr("class")
     });
@@ -32,11 +32,11 @@
 
 
     // Visible Input
-    this.$nextSection = $("div", {
+    this.$nextSection = $("<div />", {
       "class": "tafi-section tafi-next-section"
     });
 
-    this.$input = $("input", {
+    this.$input = $("<input />", {
       type: "text",
       placeholder: $element.attr("placeholder"),
       required: $element.prop("required"),
@@ -45,10 +45,16 @@
     this.$nextSection.append(this.$input);
 
     // Hidden Input
-    this.$hidden = $("input", {
+    this.$hidden = $("<input />", {
       type: "hidden",
       name: $element.attr("name")
     });
+
+    this.$container
+      .append(this.$nextSection)
+      .append(this.$hidden);
+
+    $element.replaceWith(this.$container);
 
 
     // TODO: Generate a hidden input for each section?
@@ -86,8 +92,8 @@
 
     this.currentDecision = decision;
 
-    this.$nextSection.append(_buildOptionChoicesList(decision.option.choices));
-    this.$input.attr("title", option.name);
+    this.$nextSection.append(_buildOptionChoicesList(decision.option));
+    this.$input.attr("title", decision.option.name);
   };
 
   Tafi.prototype.makeDecision = function (choice) {
@@ -149,7 +155,7 @@
     return options;
   };
 
-  var _findDecision = function (path) {
+  var _findDecision = function (path, options) {
     var name,
       option,
       branches;
@@ -166,7 +172,7 @@
 
     if (!name) throw new Error("Your path must have a root");
 
-    option = this.options[name];
+    option = options[name];
 
     if (!option) throw new Error("The specified root (" + name + ") was not found in the options list");
     if (!branches) throw new Error("There were no branches specified for the root");
@@ -175,8 +181,8 @@
   }
 
   var _buildSelectedSection = function (option, choice) {
-    var $inner = $("span"),
-      $section = $("div");
+    var $inner = $("<span />"),
+      $section = $("<div />");
 
     $section
       .addClass("tafi-section")
@@ -197,7 +203,7 @@
   };
 
   var _buildOptionChoicesList = function (option) {
-    var $optionChoices = $("ul", {
+    var $optionChoices = $("<ul />", {
       "class": "tafi-option-choices"
     });
 
@@ -205,11 +211,11 @@
     // $optionChoices.addClass(settings.optionChoicesClass);
 
     $.each(option.choices, function (choice) {
-      var $li = $("li");
+      var $li = $("<li />");
 
       $li.data("tafi-value", choice.value);
 
-      $li.append("a", {
+      $li.append("<a />", {
         href: "#",
         role: "button"
       }).text(choice.label);
@@ -224,17 +230,17 @@
   //
   // Events
 
-  var _sectionClick = function (e) {
+  var _sectionClick = function () {
     // Set the active section as the clicked one
 
     // display the option choices
   };
 
-  var _inputFocus = function (e) {
-    this.showSectionChoices(this.decision().option.choices);
+  var _inputFocus = function () {
+//    this.showSectionChoices(this.decision().option.choices);
   };
 
-  var _inputBlur = function (e) {
+  var _inputBlur = function () {
     this.hideChoices();
   };
 
@@ -249,9 +255,10 @@
   // Section
   function Option(name, option) {
 
-    $.each(option, $.proxy(function (key, value) {
-      this[key] = value;
-    }));
+    var _this = this;
+    $.each(option, function (key, value) {
+      _this[key] = value;
+    });
 
     this.name = name;
   }

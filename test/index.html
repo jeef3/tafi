@@ -4,6 +4,7 @@
     <title>Tafi</title>
 
     <script src="jquery/jquery.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -18,7 +19,125 @@
     <script src="tafi.js"></script>
     <script>
         $(function () {
-            $("#test-input").tafi();
+            $("#test-input").tafi({
+                        "options": {
+                            "moormaster_group": {
+                                "title": "MoorMaster Group",
+                                "choices": [
+                                    { "value": "", "text": "", "label": "None (Document number only)" },
+                                    { "value": "SM", "text": "SM", "label": "SM (Part # CMM)" },
+                                    { "value": "AM", "text": "AM", "label": "AM (Assembly Drawing)" },
+                                    { "value": "MM", "text": "MM", "label": "MM (Other)" },
+                                    { "value": "DM", "text": "DM", "label": "DM (Documents)" },
+                                    { "value": "PM", "text": "PM", "label": "PM (Part Drawing)" }
+                                ]
+                            },
+                            "moormaster_type": {
+                                "title": "MoorMaster Type",
+                                "choices": [
+                                    { "value": "0", "text": "0", "label": "0 (Common)" },
+                                    { "value": "2", "text": "2", "label": "2 (MM200)" },
+                                    { "value": "4", "text": "4", "label": "4 (MM400)" },
+                                    { "value": "6", "text": "6", "label": "6 (MM600)" },
+                                    { "value": "8", "text": "8", "label": "8 (MM800)" },
+                                    { "value": "T", "text": "T", "label": "T (Other)" },
+                                    { "value": "G", "text": "G", "label": "G (Grease line)"}
+                                ]
+                            },
+                            "group": {
+                                "title": "Group",
+                                "choices": [
+                                    { "value": "A", "text": "A", "label": "A (Assembly)" },
+                                    { "value": "P", "text": "P", "label": "P (Part)" },
+                                    { "value": "D", "text": "D", "label": "D (Documentation)" },
+                                    { "value": "L", "text": "L", "label": "L (Calculation)" },
+                                    { "value": "F", "text": "F", "label": "F (Specification)" },
+                                    { "value": "W", "text": "W", "label": "W (Other)" },
+                                    { "value": "S", "text": "S", "label": "S (Drawing)" }
+                                ]
+                            },
+                            "document_type": {
+                                "title": "Sub-type",
+                                "choices": [
+                                    { "value": "E", "text": "E", "label": "E (Electrical)" },
+                                    { "value": "H", "text": "H", "label": "H (Hydraulic)" }
+                                ]
+                            },
+                            "sequence": {
+                                "title": "Sequence"
+                            },
+                            "variant": {
+                                "title": "Variant",
+                                "default": 0,
+                                "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                            },
+                            "separator": {
+                                "default": "-"
+                            }
+                        },
+
+                        "path": {
+                            "moormaster_group": {
+                                "": "%number",
+                                "SM": "%part",
+                                "PM": "%partDrawing",
+                                "*": "%otherDrawing"
+                            }
+                        },
+
+                        "partials": {
+                            "%part": {
+                                "moormaster_type": {
+                                    "G": "%greaseLine",
+                                    "*": {
+                                        "separator": {
+                                            "*": {
+                                                "document_type": {
+                                                    "*": {
+                                                        "group": {
+                                                            "*": "%number"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "%partDrawing": {
+                                "group": {
+                                    "*": {
+                                        "separator": {
+                                            "*": "%number"
+                                        }
+                                    }
+                                }
+
+                            },
+                            "%otherDrawing": {
+                                "moormaster_type": {
+                                    "*": "%partDrawing"
+                                }
+                            },
+
+                            "%greaseLine": {
+
+                            },
+
+                            "%number": {
+                                "sequence": {
+                                    "*": {
+                                        "separator": {
+                                            "*": {
+                                                "variant": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+            );
         });
     </script>
 </body>

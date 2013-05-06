@@ -1,0 +1,18 @@
+.tafi {
+
+    border: solid 1px #ccc;
+    border-radius: 4px;
+}
+
+.tafi-input,
+.tafi-input:focus {
+    border: none;
+    outline: none;
+}
+
+.tafi-option-choices {
+    display: none;
+}
+.tafi-option-choices.show {
+    display: block;
+}
