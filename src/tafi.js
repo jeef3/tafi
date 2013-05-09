@@ -43,6 +43,7 @@
     });
 
     this.$input = $("<input />", {
+      id: $element.attr("id"),
       type: "text",
       placeholder: $element.attr("placeholder"),
       required: $element.prop("required"),
@@ -78,20 +79,23 @@
   Tafi.prototype.initEvents = function () {
 
     this.$container
-      .on("click", ".tafi-section", $.proxy(_sectionClick));
+      .on("click", ".tafi-section", $.proxy(_sectionClick, this));
 
     this.$input
-      .on("focus", $.proxy(this, _inputFocus))
-      .on("blur", $.proxy(this, _inputBlur))
-      .on("keyup", $.proxy(this, _inputKeyup));
+      .on("focus", $.proxy(_inputFocus, this))
+      .on("blur", $.proxy(_inputBlur, this))
+      .on("keyup", $.proxy(_inputKeyup, this));
   };
 
-  Tafi.prototype.showSectionChoices = function (section, option) {
-
+  Tafi.prototype.showSectionChoices = function ($choiceList) {
+    this.hideChoices();
+    $choiceList.addClass("show");
   };
 
   Tafi.prototype.hideChoices = function () {
-
+    this.$container
+      .find(".tafi-option-choices")
+      .removeClass("show");
   };
 
   Tafi.prototype.selectOptionChoice = function (option) {
@@ -237,15 +241,12 @@
     // TODO: Take an optional class value from dev? e.g.: dropdown-menu
     // $optionChoices.addClass(settings.optionChoicesClass);
 
-    $.each(option.choices, function (choice) {
+    $.each(option.choices, function (index, choice) {
       var $li = $("<li />");
 
-      $li.data("tafi-value", choice.value);
-
-      $li.append("<a />", {
-        href: "#",
-        role: "button"
-      }).text(choice.label);
+      $li
+        .data("tafi-value", choice.value)
+        .append($("<a />", { href: "#", role: "button" }).text(choice.label));
 
       $optionChoices.append($li);
     });
@@ -257,14 +258,17 @@
   //
   // Events
 
-  var _sectionClick = function () {
+  var _sectionClick = function (e) {
     // Set the active section as the clicked one
 
     // display the option choices
+    var $choiceList = $(e.currentTarget).find(".tafi-option-choices");
+    this.showSectionChoices($choiceList);
   };
 
-  var _inputFocus = function () {
-//    this.showSectionChoices(this.decision().option.choices);
+  var _inputFocus = function (e) {
+    var $choiceList = $(e.currentTarget).next();
+    this.showSectionChoices($choiceList);
   };
 
   var _inputBlur = function () {
