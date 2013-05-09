@@ -10,18 +10,24 @@
 
   function Tafi($element, settings) {
 
-    this.sections = [];
+    this.options = _rehydrateOptions(settings.options);
+    this.partials = settings.partials || {};
+
+    // TODO: ensure this validates that the path is valid
+    this.sections = _initSections(settings.sections);
 
     this.initElements($element);
     this.initEvents();
-
-    this.options = _rehydrateOptions(settings.options);
-    this.partials = settings.partials || {};
 
     this.decision(_findDecision(settings.path, this.options));
   }
 
   Tafi.prototype.initElements = function ($element) {
+    var i,
+      length,
+      section,
+      option,
+      choice;
 
     // Container
     this.$container = $("<div />", {
@@ -49,6 +55,15 @@
       type: "hidden",
       name: $element.attr("name")
     });
+
+    // TEMP: Current sections
+    for (i = 0, length = this.sections.length; i < length; i++) {
+      section = this.sections[i];
+      option = this.options[section.option];
+      choice = option.findChoice(section.choice);
+
+      this.$container.append(_buildSelectedSection(option, choice));
+    }
 
     this.$container
       .append(this.$nextSection)
@@ -145,6 +160,18 @@
   //
   // Private
 
+  var _initSections = function (sectionsData) {
+    var i,
+      length,
+      sections = [];
+
+    for (i = 0, length = sectionsData.length; i < length; i++) {
+      sections.push(sectionsData[i]);
+    }
+
+    return sections;
+  };
+
   var _rehydrateOptions = function (optionsData) {
     var options = {};
 
@@ -178,7 +205,7 @@
     if (!branches) throw new Error("There were no branches specified for the root");
 
     return { option: option, branches: branches };
-  }
+  };
 
   var _buildSelectedSection = function (option, choice) {
     var $inner = $("<span />"),
@@ -252,7 +279,7 @@
   };
 
   //
-  // Section
+  // Option
   function Option(name, option) {
 
     var _this = this;
@@ -264,7 +291,16 @@
   }
 
   Option.prototype.isEditable = function () {
+    return true;
+  };
 
+  Option.prototype.findChoice = function (value) {
+    var i,
+      length;
+
+    for (i = 0, length = this.choices.length; i < length; i++) {
+      if (this.choices[i].value === value) return this.choices[i];
+    }
   };
 
 
