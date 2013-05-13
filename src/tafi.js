@@ -9,25 +9,30 @@
 (function($) {
 
   function Tafi($element, settings) {
-
-    this.options = _rehydrateOptions(settings.options);
-    this.partials = settings.partials || {};
-
-    // TODO: ensure this validates that the path is valid
-    this.sections = _initSections(settings.sections);
+    var i,
+      length,
+      decisions,
+      decision;
 
     this.initElements($element);
     this.initEvents();
 
-    this.decision(_findDecision(settings.path, this.options));
+    this.options = _rehydrateOptions(settings.options);
+    this.path = settings.path;
+    this.partials = settings.partials || {};
+    this.decisions = [];
+
+    this.currentJunction = _buidJunction.call(this);
+
+    decisions = settings.decisions;
+    for (i = 0, length = decisions.length; i < length; i++) {
+      decision = decisions[i];
+
+      this.makeDecision(decision);
+    }
   }
 
   Tafi.prototype.initElements = function ($element) {
-    var i,
-      length,
-      section,
-      option,
-      choice;
 
     // Container
     this.$container = $("<div />", {
@@ -38,8 +43,8 @@
 
 
     // Visible Input
-    this.$nextSection = $("<div />", {
-      "class": "tafi-section tafi-next-section"
+    this.$nextDecision = $("<div />", {
+      "class": "tafi-decision tafi-next-decision"
     });
 
     this.$input = $("<input />", {
@@ -49,7 +54,7 @@
       required: $element.prop("required"),
       "class": "tafi-input"
     });
-    this.$nextSection.append(this.$input);
+    this.$nextDecision.append(this.$input);
 
     // Hidden Input
     this.$hidden = $("<input />", {
@@ -57,29 +62,21 @@
       name: $element.attr("name")
     });
 
-    // TEMP: Current sections
-    for (i = 0, length = this.sections.length; i < length; i++) {
-      section = this.sections[i];
-      option = this.options[section.option];
-      choice = option.findChoice(section.choice);
-
-      this.$container.append(_buildSelectedSection(option, choice));
-    }
-
     this.$container
-      .append(this.$nextSection)
+      .append(this.$nextDecision)
       .append(this.$hidden);
 
     $element.replaceWith(this.$container);
-
-
-    // TODO: Generate a hidden input for each section?
   };
 
   Tafi.prototype.initEvents = function () {
 
+    $(document)
+      .on("click", $.proxy(_documentClick, this));
+
     this.$container
-      .on("click", ".tafi-section", $.proxy(_sectionClick, this));
+      .on("click", ".tafi-decision", $.proxy(_decisionClick, this))
+      .on("decisionmade", $.proxy(_decisionMade, this));
 
     this.$input
       .on("focus", $.proxy(_inputFocus, this))
@@ -87,94 +84,85 @@
       .on("keyup", $.proxy(_inputKeyup, this));
   };
 
-  Tafi.prototype.showSectionChoices = function ($choiceList) {
-    this.hideChoices();
-    $choiceList.addClass("show");
+  Tafi.prototype._redrawDecisions = function () {
+    var i,
+      length;
+
+    this.$container.remove(".tafi-decision");
+
+    for (length = this.decisions.length - 1, i = length; i > -1; i--) {
+      this.$container.prepend(_buildDecision(this.decisions[i]));
+    }
   };
 
-  Tafi.prototype.hideChoices = function () {
+  Tafi.prototype._updateInput = function () {
+    var option = this.options[this.currentJunction.option];
+
+    this.$input.attr("placeholder", option.title);
+  };
+
+  Tafi.prototype.showDecisionChoices = function ($decision) {
+    this._hideChoices();
+
+    $decision.addClass("tafi-decision-show-options");
+  };
+
+  Tafi.prototype._hideChoices = function () {
     this.$container
-      .find(".tafi-option-choices")
-      .removeClass("show");
-  };
-
-  Tafi.prototype.selectOptionChoice = function (option) {
-
-  };
-
-  Tafi.prototype.currentSection = function () {
-
-  };
-
-  Tafi.prototype.decision = function (decision) {
-    if (!decision) return this.currentDecision;
-
-    this.currentDecision = decision;
-
-    this.$nextSection.append(_buildOptionChoicesList(decision.option));
-    this.$input.attr("title", decision.option.name);
+      .find(".tafi-decision")
+      .removeClass("tafi-decision-show-options");
   };
 
   Tafi.prototype.makeDecision = function (choice) {
-    var decision = this.decision(),
-      option = decision.option,
-      branches = decision.branches,
-      path = branches[choice.value],
-      $section = _buildSelectedSection(option, choice);
+    var option = this.options[this.currentJunction.option],
+      nextJunction = _getNextJunction.call(this, this.currentJunction.branches, choice),
+      decision = { option: option, choice: option.findChoice(choice) };
 
-    // Add the DOM elements for the new section and clear the input
-    this.$nextSection
-      .val("")
-      .before($section);
+    if (!nextJunction) throw new Error("Invalid decision, no branch exists for " + choice);
 
-    // If there was no match, see if a wildcard option was supplied
-    if (!path) {
-      path = branches["*"];
-    }
+    this.decisions.push(decision);
+    this.currentJunction = nextJunction;
 
-    if (!path) {
-      throw new Error("Could not find a path to follow");
-    }
-
-    if (typeof(path) === "string" && path.indexOf("%") === 0) {
-      path = this.partials[path];
-    }
-
-    this.sections.push({
-      option: option.name,
-      choice: choice
-    });
-
-    this.decision(_findDecision(path));
+    this.$container.trigger("decisionmade", decision);
   };
 
-  Tafi.prototype.delete = function (section) {
-    // if 'section' was supplied, delete it and everything after it
+  var _getNextJunction = function (branches, choice) {
+    var junctionRoot;
+
+    $.each(branches, function (choiceValue, junction) {
+      if (choiceValue === choice) {
+        junctionRoot = junction;
+        return false;
+      }
+    });
+
+    if (!junctionRoot && branches["*"]) {
+      junctionRoot = branches["*"];
+    }
+
+    if (!junctionRoot) {
+      throw new Error("No path found for " + choice);
+    }
+
+    return _buidJunction.call(this, junctionRoot);
+  };
+
+  Tafi.prototype.delete = function (decision) {
+    // if 'decision' was supplied, delete it and everything after it
 
     // Otherwise, delete most recent section, ie "back"
-    this.sections.pop();
+    this.decisions.pop();
     // TODO: Find the section element via data- attr's
-    this.$nextSection.before().remove();
+    this.$nextDecision.before().remove();
   };
 
   Tafi.prototype.reset = function () {
     // Clear all and return to start
   };
 
+
   //
   // Private
-
-  var _initSections = function (sectionsData) {
-    var i,
-      length,
-      sections = [];
-
-    for (i = 0, length = sectionsData.length; i < length; i++) {
-      sections.push(sectionsData[i]);
-    }
-
-    return sections;
-  };
 
   var _rehydrateOptions = function (optionsData) {
     var options = {};
@@ -186,51 +174,44 @@
     return options;
   };
 
-  var _findDecision = function (path, options) {
-    var name,
-      option,
-      branches;
+  var _buidJunction = function (junctionRoot) {
+    var junction;
 
-    if (!path) throw new Error("You need to provide a path");
+    if (!junctionRoot) {
+      junctionRoot = this.path;
+    }
 
-    $.each(path, function (key, value) {
-      name = key;
-      branches = value;
+    if (typeof junctionRoot === "string") {
+      junction = this.partials[junctionRoot];
+    } else {
+      junction = junctionRoot;
+    }
 
-      // There should only be one root
-      return false;
-    });
-
-    if (!name) throw new Error("Your path must have a root");
-
-    option = options[name];
-
-    if (!option) throw new Error("The specified root (" + name + ") was not found in the options list");
-    if (!branches) throw new Error("There were no branches specified for the root");
-
-    return { option: option, branches: branches };
+    return junction;
   };
 
-  var _buildSelectedSection = function (option, choice) {
-    var $inner = $("<span />"),
-      $section = $("<div />");
+  var _buildDecision = function (decision) {
+    var option = decision.option,
+      choice = decision.choice,
+      $inner = $("<span />"),
+      $decision = $("<div />");
 
-    $section
-      .addClass("tafi-section")
-      .addClass(option.isEditable() ? "tafi-editable-section" : "tafi-noneditable-section")
+    $decision
+      .addClass("tafi-decision")
+      .addClass(option.isEditable() ? "tafi-editable-decision" : "tafi-noneditable-decision")
       .data("tafi-option", option.name)
       .data("tafi-choice", choice.value)
       .attr("title", "" + option.name + ": " + choice.label);
 
     $inner
-      .addClass("tafi-section-text")
+      .addClass("tafi-decision-text")
       .text(choice.text);
 
-    $section
+    $decision
       .append($inner)
       .append(_buildOptionChoicesList(option));
 
-    return $section;
+    return $decision;
   };
 
   var _buildOptionChoicesList = function (option) {
@@ -258,21 +239,30 @@
   //
   // Events
 
-  var _sectionClick = function (e) {
-    // Set the active section as the clicked one
+  var _documentClick = function (e) {
+//    this._hideChoices();
+  };
+
+  var _decisionClick = function (e) {
+    // Set the active decision as the clicked one
 
     // display the option choices
     var $choiceList = $(e.currentTarget).find(".tafi-option-choices");
-    this.showSectionChoices($choiceList);
+    this.showDecisionChoices($choiceList);
+  };
+
+  var _decisionMade = function () {
+    this._updateInput();
+    this._redrawDecisions();
   };
 
   var _inputFocus = function (e) {
     var $choiceList = $(e.currentTarget).next();
-    this.showSectionChoices($choiceList);
+    this.showDecisionChoices($choiceList);
   };
 
   var _inputBlur = function () {
-    this.hideChoices();
+    this._hideChoices();
   };
 
   var _inputKeyup = function (e) {
@@ -295,16 +285,20 @@
   }
 
   Option.prototype.isEditable = function () {
-    return true;
+    return !!this.choices;
   };
 
   Option.prototype.findChoice = function (value) {
     var i,
       length;
 
+    if (!this.choices) return this.default;
+
     for (i = 0, length = this.choices.length; i < length; i++) {
       if (this.choices[i].value === value) return this.choices[i];
     }
+
+    throw new Error("No choice found with value " + value);
   };
 
 

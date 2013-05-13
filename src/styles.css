@@ -9,7 +9,7 @@
     clear: both;
 }
 
-.tafi-section {
+.tafi-decision {
     position: relative;
     float: left;
 }
@@ -35,7 +35,7 @@
     background: white;
     border: solid 1px #ccc;
 }
-.tafi-option-choices.show { display: block; }
 .tafi-option-choices > li {
     white-space: nowrap;
 }
+.tafi-decision-show-options .tafi-option-choices { display: block; }
