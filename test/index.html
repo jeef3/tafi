@@ -20,7 +20,14 @@
     <script>
         $(function () {
             $("#test-input").tafi({
-                "decisions": ["SM", "4", "-"],
+                "choicesValues": ["SM", "4", "E"],
+
+                // TODO: Get it working from models like this
+                "documentNumner": {
+                    "moormaster_group": "SM",
+                    "moormaster_type": "4",
+                    "document_type": "E"
+                },
 
                 "options": {
                     "moormaster_group": {
@@ -59,7 +66,7 @@
                         ]
                     },
                     "document_type": {
-                        "title": "Sub-type",
+                        "title": "Document Type",
                         "choices": [
                             { "value": "E", "text": "E", "label": "E (Electrical)" },
                             { "value": "H", "text": "H", "label": "H (Hydraulic)" }

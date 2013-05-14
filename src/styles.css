@@ -9,7 +9,8 @@
     clear: both;
 }
 
-.tafi-decision {
+.tafi-decision,
+.tafi-next-decision {
     position: relative;
     float: left;
 }

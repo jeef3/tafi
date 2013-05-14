@@ -11,8 +11,8 @@
   function Tafi($element, settings) {
     var i,
       length,
-      decisions,
-      decision;
+      choicesValues,
+      choiceValue;
 
     this.initElements($element);
     this.initEvents();
@@ -24,11 +24,11 @@
 
     this.currentJunction = _buidJunction.call(this);
 
-    decisions = settings.decisions;
-    for (i = 0, length = decisions.length; i < length; i++) {
-      decision = decisions[i];
+    choicesValues = settings.choicesValues;
+    for (i = 0, length = choicesValues.length; i < length; i++) {
+      choiceValue = choicesValues[i];
 
-      this.makeDecision(decision);
+      this.makeDecision(choiceValue);
     }
   }
 
@@ -44,7 +44,7 @@
 
     // Visible Input
     this.$nextDecision = $("<div />", {
-      "class": "tafi-decision tafi-next-decision"
+      "class": "tafi-next-decision"
     });
 
     this.$input = $("<input />", {
@@ -88,7 +88,7 @@
     var i,
       length;
 
-    this.$container.remove(".tafi-decision");
+    this.$container.find(".tafi-decision").remove();
 
     for (length = this.decisions.length - 1, i = length; i > -1; i--) {
       this.$container.prepend(_buildDecision(this.decisions[i]));
@@ -99,6 +99,19 @@
     var option = this.options[this.currentJunction.option];
 
     this.$input.attr("placeholder", option.title);
+
+    this._updateCurrentChoices();
+  };
+
+  Tafi.prototype._updateCurrentChoices = function () {
+    var option = this.options[this.currentJunction.option],
+      $currentChoiceList = _buildOptionChoicesList.call(this, option);
+
+    this.$nextDecision
+      .find(".tafi-option-choices")
+        .remove()
+        .end()
+      .append($currentChoiceList);
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
@@ -109,42 +122,31 @@
 
   Tafi.prototype._hideChoices = function () {
     this.$container
-      .find(".tafi-decision")
+      .find(".tafi-decision, .tafi-next-decision")
       .removeClass("tafi-decision-show-options");
   };
 
-  Tafi.prototype.makeDecision = function (choice) {
+  Tafi.prototype.makeDecision = function (choiceValue) {
     var option = this.options[this.currentJunction.option],
-      nextJunction = _getNextJunction.call(this, this.currentJunction.branches, choice),
-      decision = { option: option, choice: option.findChoice(choice) };
+      nextJunction = _getNextJunction.call(this, this.currentJunction.branches, choiceValue),
+      nextOption = this.options[nextJunction.option],
+      decision = { option: option, choice: option.findChoice(choiceValue) },
+      onlyOption;
 
-    if (!nextJunction) throw new Error("Invalid decision, no branch exists for " + choice);
+    if (!nextJunction) throw new Error("Invalid decision, no branch exists for " + choiceValue);
 
     this.decisions.push(decision);
     this.currentJunction = nextJunction;
 
     this.$container.trigger("decisionmade", decision);
-  };
 
-  var _getNextJunction = function (branches, choice) {
-    var junctionRoot;
+    // If, from here, there is only one way to go, take it.
+    if (!nextOption.choices ||
+        $.map(nextOption.choices, function (n, i) { return i; }).length === 1) {
 
-    $.each(branches, function (choiceValue, junction) {
-      if (choiceValue === choice) {
-        junctionRoot = junction;
-        return false;
-      }
-    });
-
-    if (!junctionRoot && branches["*"]) {
-      junctionRoot = branches["*"];
+      onlyOption = nextJunction.branches["*"];
+      this.makeDecision(onlyOption);
     }
-
-    if (!junctionRoot) {
-      throw new Error("No path found for " + choice);
-    }
-
-    return _buidJunction.call(this, junctionRoot);
   };
 
   Tafi.prototype.delete = function (decision) {
@@ -190,6 +192,27 @@
     return junction;
   };
 
+  var _getNextJunction = function (branches, choice) {
+    var junctionRoot;
+
+    $.each(branches, function (choiceValue, junction) {
+      if (choiceValue === choice) {
+        junctionRoot = junction;
+        return false;
+      }
+    });
+
+    if (!junctionRoot && branches["*"]) {
+      junctionRoot = branches["*"];
+    }
+
+    if (!junctionRoot) {
+      throw new Error("No path found for " + choice);
+    }
+
+    return _buidJunction.call(this, junctionRoot);
+  };
+
   var _buildDecision = function (decision) {
     var option = decision.option,
       choice = decision.choice,
@@ -200,12 +223,15 @@
       .addClass("tafi-decision")
       .addClass(option.isEditable() ? "tafi-editable-decision" : "tafi-noneditable-decision")
       .data("tafi-option", option.name)
-      .data("tafi-choice", choice.value)
-      .attr("title", "" + option.name + ": " + choice.label);
+      .data("tafi-choice", choice.value || choice)
+
+    if (option.title && choice.label) {
+      $decision.attr("title", "" + option.title + ": " + choice.label);
+    }
 
     $inner
       .addClass("tafi-decision-text")
-      .text(choice.text);
+      .text(choice.text || choice);
 
     $decision
       .append($inner)
@@ -215,9 +241,11 @@
   };
 
   var _buildOptionChoicesList = function (option) {
-    var $optionChoices = $("<ul />", {
-      "class": "tafi-option-choices"
-    });
+    var $optionChoices;
+
+    if (!option.choices) return $();
+
+    $optionChoices = $("<ul />", { "class": "tafi-option-choices" });
 
     // TODO: Take an optional class value from dev? e.g.: dropdown-menu
     // $optionChoices.addClass(settings.optionChoicesClass);
@@ -247,8 +275,7 @@
     // Set the active decision as the clicked one
 
     // display the option choices
-    var $choiceList = $(e.currentTarget).find(".tafi-option-choices");
-    this.showDecisionChoices($choiceList);
+    this.showDecisionChoices($(e.currentTarget));
   };
 
   var _decisionMade = function () {
@@ -257,7 +284,7 @@
   };
 
   var _inputFocus = function (e) {
-    var $choiceList = $(e.currentTarget).next();
+    var $choiceList = $(e.currentTarget).parent();
     this.showDecisionChoices($choiceList);
   };
 
