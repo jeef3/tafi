@@ -22,7 +22,7 @@
     this.partials = settings.partials || {};
     this.decisions = [];
 
-    this.currentJunction = _buidJunction.call(this);
+    this.currentJunction = _buildJunction.call(this);
 
     choicesValues = settings.choicesValues;
     for (i = 0, length = choicesValues.length; i < length; i++) {
@@ -76,12 +76,18 @@
 
     this.$container
       .on("click", ".tafi-decision", $.proxy(_decisionClick, this))
-      .on("decisionmade", $.proxy(_decisionMade, this));
+      .on("makedecision", $.proxy(_decisionMade, this))
+      .on("deletedecision", $.proxy(_decisionDeleted, this));
 
     this.$input
       .on("focus", $.proxy(_inputFocus, this))
       .on("blur", $.proxy(_inputBlur, this))
       .on("keyup", $.proxy(_inputKeyup, this));
+  };
+
+  Tafi.prototype.redraw = function () {
+    this._updateInput();
+    this._redrawDecisions();
   };
 
   Tafi.prototype._redrawDecisions = function () {
@@ -138,7 +144,7 @@
     this.decisions.push(decision);
     this.currentJunction = nextJunction;
 
-    this.$container.trigger("decisionmade", decision);
+    this.$container.trigger("makedecision", decision);
 
     // If, from here, there is only one way to go, take it.
     if (!nextOption.choices ||
@@ -149,13 +155,30 @@
     }
   };
 
-  Tafi.prototype.delete = function (decision) {
-    // if 'decision' was supplied, delete it and everything after it
+  Tafi.prototype.deleteDecision = function (decision) {
+    var index = this.decisions.indexOf(decision),
+      removeTo = index === -1 ? - 1 : (this.decisions.length),
+      removed = this.decisions.slice(index),
+      junction,
+      i,
+      length,
+      decision;
 
-    // Otherwise, delete most recent section, ie "back"
-    this.decisions.pop();
-    // TODO: Find the section element via data- attr's
-    this.$nextDecision.before().remove();
+    this.decisions = this.decisions.slice(0, removeTo);
+
+    junction = _buildJunction.call(this);
+
+    for (i = 0, length = this.decisions.length; i < length; i++) {
+      decision = this.decisions[i];
+
+      junction = _getNextJunction.call(this, junction.branches, decision.choice.value || decision.choice);
+    }
+
+    this.currentJunction = junction;
+
+    // TODO: How to skip implicit decisions (e.g.: separator) and just delete the thing before it?
+
+    this.$container.trigger("deletedecision", removed);
   };
 
   Tafi.prototype.reset = function () {
@@ -176,7 +199,7 @@
     return options;
   };
 
-  var _buidJunction = function (junctionRoot) {
+  var _buildJunction = function (junctionRoot) {
     var junction;
 
     if (!junctionRoot) {
@@ -210,7 +233,7 @@
       throw new Error("No path found for " + choice);
     }
 
-    return _buidJunction.call(this, junctionRoot);
+    return _buildJunction.call(this, junctionRoot);
   };
 
   var _buildDecision = function (decision) {
@@ -279,8 +302,11 @@
   };
 
   var _decisionMade = function () {
-    this._updateInput();
-    this._redrawDecisions();
+    this.redraw()
+  };
+
+  var _decisionDeleted = function () {
+    this.redraw();
   };
 
   var _inputFocus = function (e) {
@@ -294,8 +320,13 @@
 
   var _inputKeyup = function (e) {
     switch (e.which) {
-      // On delete, when at the start, this.delete()
-      // On enter or tab, select and move next
+      // On 8 (backspace), when at the start, this.delete()
+      case 8: this.deleteDecision(); break;
+
+      // On 13 (enter) or tab, select and move next
+
+      // On 27 (Escape), hide the choices
+//      case 27: this._hideChoices(); break;
     }
   };
 
