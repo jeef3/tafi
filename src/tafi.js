@@ -76,12 +76,13 @@
 
     this.$container
       .on("click", ".tafi-decision", $.proxy(_decisionClick, this))
+      .on("click", ".tafi-option-choice", $.proxy(_choiceClick, this))
       .on("makedecision", $.proxy(_decisionMade, this))
       .on("deletedecision", $.proxy(_decisionDeleted, this));
 
     this.$input
       .on("focus", $.proxy(_inputFocus, this))
-      .on("blur", $.proxy(_inputBlur, this))
+//      .on("blur", $.proxy(_inputBlur, this))
       .on("keyup", $.proxy(_inputKeyup, this));
   };
 
@@ -282,7 +283,8 @@
       var $li = $("<li />");
 
       $li
-        .data("tafi-value", choice.value)
+        .data("tafi-choice-value", choice.value)
+        .addClass("tafi-option-choice")
         .append($("<a />", { href: "#", role: "button" }).text(choice.label));
 
       $optionChoices.append($li);
@@ -304,6 +306,11 @@
 
     // display the option choices
     this.showDecisionChoices($(e.currentTarget));
+  };
+
+  var _choiceClick = function (e) {
+    var choiceValue = $(e.currentTarget).data("tafi-choice-value");
+    this.makeDecision(choiceValue);
   };
 
   var _decisionMade = function () {
