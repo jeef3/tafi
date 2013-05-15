@@ -106,6 +106,7 @@
 
     this.$input.attr("placeholder", option.title);
 
+
     this._updateCurrentChoices();
   };
 
@@ -168,6 +169,7 @@
 
     junction = _buildJunction.call(this);
 
+    // TODO: How to skip implicit decisions (e.g.: separator) and just delete the thing before it?
     for (i = 0, length = this.decisions.length; i < length; i++) {
       decision = this.decisions[i];
 
@@ -176,9 +178,12 @@
 
     this.currentJunction = junction;
 
-    // TODO: How to skip implicit decisions (e.g.: separator) and just delete the thing before it?
-
     this.$container.trigger("deletedecision", removed);
+
+    // If, from here, we are at an implicit decision, go back one more
+    if (removed.length === 1 && !removed[0].option.choices) {
+      this.deleteDecision();
+    }
   };
 
   Tafi.prototype.reset = function () {
