@@ -22,6 +22,8 @@
     this.partials = settings.partials || {};
     this.decisions = [];
 
+    this.selectedChoiceIndex = -1;
+
     this.currentJunction = _buildJunction.call(this);
 
     choicesValues = settings.choicesValues;
@@ -83,7 +85,8 @@
     this.$input
       .on("focus", $.proxy(_inputFocus, this))
 //      .on("blur", $.proxy(_inputBlur, this))
-      .on("keyup", $.proxy(_inputKeyup, this));
+      .on("keyup", $.proxy(_inputKeyup, this))
+      .on("keydown", $.proxy(_inputKeydown, this));
   };
 
   Tafi.prototype.redraw = function () {
@@ -113,7 +116,8 @@
 
   Tafi.prototype._updateCurrentChoices = function () {
     var option = this.options[this.currentJunction.option],
-      $currentChoiceList = _buildOptionChoicesList.call(this, option);
+      filter = this.$input.val(),
+      $currentChoiceList = _buildOptionChoicesList.call(this, option, filter);
 
     this.$nextDecision
       .find(".tafi-option-choices")
@@ -189,6 +193,18 @@
 
   Tafi.prototype.reset = function () {
     // Clear all and return to start
+  };
+
+  Tafi.prototype.moveSelectionUp = function () {
+
+  };
+
+  Tafi.prototype.moveSelectionDown = function () {
+
+  };
+
+  Tafi.prototype.selectedChoice = function () {
+
   };
 
 
@@ -269,8 +285,9 @@
     return $decision;
   };
 
-  var _buildOptionChoicesList = function (option) {
-    var $optionChoices;
+  var _buildOptionChoicesList = function (option, filter) {
+    var $optionChoices,
+      regex = filter ? new RegExp(filter, "ig") : null;
 
     if (!option.choices) return $();
 
@@ -280,12 +297,15 @@
     // $optionChoices.addClass(settings.optionChoicesClass);
 
     $.each(option.choices, function (index, choice) {
-      var $li = $("<li />");
+      var $li = $("<li />", { role: "button" });
+
+//      if (regex && choice.label.search(regex) === -1) return;
+      if (regex && choice.label.toLowerCase().indexOf(filter) !== 0) return;
 
       $li
         .data("tafi-choice-value", choice.value)
         .addClass("tafi-option-choice")
-        .append($("<a />", { href: "#", role: "button" }).text(choice.label));
+        .append($("<span />").text(choice.label));
 
       $optionChoices.append($li);
     });
@@ -314,6 +334,7 @@
   };
 
   var _decisionMade = function () {
+    this.$input.val("");
     this.redraw();
     this.$input.focus();
   };
@@ -332,14 +353,23 @@
   };
 
   var _inputKeyup = function (e) {
+    this._updateCurrentChoices();
+  };
+
+  var _inputKeydown = function (e) {
     switch (e.which) {
-      // On 8 (backspace), when at the start, this.delete()
-      case 8: this.deleteDecision(); break;
+      // Backspace/Delete
+      case 8: if (e.currentTarget.selectionStart === 0) this.deleteDecision(); break;
+
+      // Up/down
+      case 38: this.moveSelectionUp(); break;
+      case 40: this.moveSelectionDown(); break;
+
+      // Escape
+      case 27: this._hideChoices(); break;
 
       // On 13 (enter) or tab, select and move next
-
-      // On 27 (Escape), hide the choices
-//      case 27: this._hideChoices(); break;
+      case 13: this.makeDecision(this.selectedChoice()); break;
     }
   };
 
