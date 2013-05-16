@@ -314,7 +314,8 @@
   };
 
   var _decisionMade = function () {
-    this.redraw()
+    this.redraw();
+    this.$input.focus();
   };
 
   var _decisionDeleted = function () {
