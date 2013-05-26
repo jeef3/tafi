@@ -30,7 +30,7 @@
     for (i = 0, length = choicesValues.length; i < length; i++) {
       choiceValue = choicesValues[i];
 
-      this.makeDecision(choiceValue);
+      this.makeDecision(choiceValue, false);
     }
   }
 
@@ -41,7 +41,9 @@
       id: $element.attr("id"),
       "class": $element.attr("class")
     });
-    this.$container.addClass("tafi");
+    this.$container
+      .addClass("tafi")
+      .data("tafi", this);
 
 
     // Visible Input
@@ -84,7 +86,6 @@
 
     this.$input
       .on("focus", $.proxy(_inputFocus, this))
-//      .on("blur", $.proxy(_inputBlur, this))
       .on("keyup", $.proxy(_inputKeyup, this))
       .on("keydown", $.proxy(_inputKeydown, this));
   };
@@ -110,7 +111,6 @@
 
     this.$input.attr("placeholder", option.title);
 
-
     this._updateCurrentChoices();
   };
 
@@ -127,6 +127,8 @@
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
+    if ($decision.hasClass("tafi-decision-show-options")) return;
+
     this._hideChoices();
 
     $decision.addClass("tafi-decision-show-options");
@@ -138,7 +140,7 @@
       .removeClass("tafi-decision-show-options");
   };
 
-  Tafi.prototype.makeDecision = function (choiceValue) {
+  Tafi.prototype.makeDecision = function (choiceValue, keepFocus) {
     var option = this.options[this.currentJunction.option],
       nextJunction = _getNextJunction.call(this, this.currentJunction.branches, choiceValue),
       nextOption = this.options[nextJunction.option],
@@ -150,14 +152,14 @@
     this.decisions.push(decision);
     this.currentJunction = nextJunction;
 
-    this.$container.trigger("makedecision", decision);
+    this.$container.trigger("makedecision", [decision, keepFocus]);
 
     // If, from here, there is only one way to go, take it.
     if (!nextOption.choices ||
         $.map(nextOption.choices, function (n, i) { return i; }).length === 1) {
 
       onlyOption = nextJunction.branches["*"];
-      this.makeDecision(onlyOption);
+      this.makeDecision(onlyOption, keepFocus);
     }
   };
 
@@ -204,6 +206,10 @@
   };
 
   Tafi.prototype.selectedChoice = function () {
+
+  };
+
+  Tafi.prototype.set = function (option, value) {
 
   };
 
@@ -298,7 +304,9 @@
     $.each(option.choices, function (index, choice) {
       var $li = $("<li />", { role: "button" });
 
-      if (filter && choice.label.toLowerCase().indexOf(filter.toLowerCase()) !== 0) return;
+      if (filter &&
+        choice.label &&
+        choice.label.toLowerCase().indexOf(filter.toLowerCase()) !== 0) return;
 
       $li
         .data("tafi-choice-value", choice.value)
@@ -316,7 +324,9 @@
   // Events
 
   var _documentClick = function (e) {
-    if (!$.contains(this.$container.get(0), e.target)) {
+    if (!$(e.target).closest('.tafi-option-choices').length &&
+      !$.contains(this.$container.get(0), e.target)) {
+
       this._hideChoices();
     }
   };
@@ -330,13 +340,14 @@
 
   var _choiceClick = function (e) {
     var choiceValue = $(e.currentTarget).data("tafi-choice-value");
-    this.makeDecision(choiceValue);
+    this.makeDecision(choiceValue, true);
   };
 
-  var _decisionMade = function () {
+  var _decisionMade = function (e, decision, keepFocus) {
     this.$input.val("");
     this.redraw();
-    this.$input.focus();
+
+    if (keepFocus) this.$input.focus();
   };
 
   var _decisionDeleted = function () {
@@ -346,10 +357,6 @@
   var _inputFocus = function (e) {
     var $choiceList = $(e.currentTarget).parent();
     this.showDecisionChoices($choiceList);
-  };
-
-  var _inputBlur = function () {
-    this._hideChoices();
   };
 
   var _inputKeyup = function (e) {
@@ -369,7 +376,7 @@
       case 27: this._hideChoices(); break;
 
       // On 13 (enter) or tab, select and move next
-      case 13: this.makeDecision(this.selectedChoice()); break;
+      case 13: this.makeDecision(this.selectedChoice(), true); break;
     }
   };
 
@@ -406,10 +413,29 @@
   //
   // jQuery plugin
 
-  $.fn.tafi = function (settings) {
-    return this.each(function () {
-      var tafi = new Tafi($(this), settings);
-      return tafi.container;
-    });
+  $.fn.tafi = function () {
+    var args = [].slice.call(arguments, 0),
+      settings,
+      method,
+      optionName,
+      optionValue,
+      _$ = $(this),
+      tafi;
+
+    if (args.length === 1 && typeof args[0] === "object") {
+      settings = args[0];
+
+      tafi = new Tafi(_$, settings);
+
+    } else if (args.length === 3 && typeof args[0] === "string") {
+      method = args[0];
+      optionName = args[1];
+      optionValue = args[2];
+
+      tafi = _$.data("tafi");
+      tafi[method](optionName, optionValue);
+    }
+
+    return tafi.$container;
   };
 }(jQuery));
