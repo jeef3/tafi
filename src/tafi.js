@@ -17,6 +17,7 @@
     this.initElements($element);
     this.initEvents();
 
+    this.classes = settings.classes || {};
     this.options = this._rehydrateOptions(settings.options);
     this.path = settings.path;
     this.partials = settings.partials || {};
@@ -332,8 +333,9 @@
 
     $optionChoices = $("<ul />", { "class": "tafi__option-choices" });
 
-    // TODO: Take an optional class value from dev? e.g.: dropdown-menu
-    // $optionChoices.addClass(settings.optionChoicesClass);
+    if (this.classes["option-choices"]) {
+      $optionChoices.addClass(this.classes["option-choices"]);
+    }
 
     $.each(option.choices, function (index, choice) {
       var $li = $("<li />", { role: "button" });
@@ -425,7 +427,10 @@
       case 27: this._hideChoices(); break;
 
       // On 13 (enter) or tab, select and move next
-      case 13: this.makeDecision(this.selectedChoice(), true); break;
+      case 13:
+        e.preventDefault(); // Otherwise the form will submit
+        this.makeDecision(this.selectedChoice(), true);
+        break;
     }
   };
 
