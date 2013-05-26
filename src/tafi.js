@@ -107,6 +107,8 @@
   };
 
   Tafi.prototype.repaint = function () {
+    this.$container.toggleClass("tafi--with-focus", this.$input.is(":focus"));
+
     this._repaintActiveChoice();
   };
 
