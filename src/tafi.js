@@ -240,7 +240,7 @@
   };
 
   Tafi.prototype.set = function (option, value) {
-
+    this.options[option].default = value;
   };
 
 
