@@ -236,7 +236,7 @@
     return this.$activeDecision
       .find(".tafi__option-choice")
       .eq(this.activeChoiceIndex)
-      .data("tafi__choice-value");
+      .data("tafi-choice-value");
   };
 
   Tafi.prototype.set = function (option, value) {
@@ -302,9 +302,9 @@
 
     $decision
       .addClass("tafi__decision")
-      .addClass(option.isEditable() ? "tafi__editable-decision" : "tafi__noneditable-decision")
-      .data("tafi__option", option.name)
-      .data("tafi__choice", choice.value || choice)
+      .addClass(option.isEditable() ? "tafi__decision--editable" : "tafi__decision--noneditable")
+      .data("tafi-option", option.name)
+      .data("tafi-choice", choice.value || choice)
 
     if (option.title && choice.label) {
       $decision.attr("title", "" + option.title + ": " + choice.label);
@@ -339,7 +339,7 @@
         choice.label.toLowerCase().indexOf(filter.toLowerCase()) !== 0) return;
 
       $li
-        .data("tafi__choice-value", choice.value)
+        .data("tafi-choice-value", choice.value)
         .addClass("tafi__option-choice")
         .append($("<a />").text(choice.label));
 
@@ -379,7 +379,7 @@
   };
 
   Tafi.prototype._choiceClicked = function (e) {
-    var choiceValue = $(e.currentTarget).data("tafi__choice-value");
+    var choiceValue = $(e.currentTarget).data("tafi-choice-value");
     this.makeDecision(choiceValue, true);
   };
 
