@@ -95,6 +95,7 @@
 
     this.$input
       .on("focus", $.proxy(this._inputFocus, this))
+      .on("blur", $.proxy(this._inputBlur, this))
       .on("keyup", $.proxy(this._inputKeyup, this))
       .on("keydown", $.proxy(this._inputKeydown, this));
   };
@@ -143,7 +144,7 @@
         .end()
       .append($currentChoiceList);
 
-    this._repaintActiveChoice();
+    this.repaint();
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
@@ -153,7 +154,7 @@
 
     this.$activeDecision = $decision;
     $decision.addClass("tafi__decision-show-options");
-    this._repaintActiveChoice();
+    this.repaint();
   };
 
   Tafi.prototype._hideChoices = function () {
@@ -229,7 +230,7 @@
 
     if (this.activeChoiceIndex < 0) this.activeChoiceIndex = 0;
 
-    this._repaintActiveChoice();
+    this.repaint();
   };
 
   Tafi.prototype.moveSelectionDown = function () {
@@ -238,7 +239,7 @@
 
     if (this.activeChoiceIndex > choiceCount) this.activeChoiceIndex = choiceCount;
 
-    this._repaintActiveChoice();
+    this.repaint();
   };
 
   Tafi.prototype.selectedChoice = function () {
@@ -379,6 +380,7 @@
       !$.contains(this.$container.get(0), e.target)) {
 
       this._hideChoices();
+      this.repaint();
     }
   };
 
@@ -396,7 +398,7 @@
 
   Tafi.prototype._choiceMouseover = function (e) {
     this.activeChoiceIndex = $(e.currentTarget).index();
-    this._repaintActiveChoice();
+    this.repaint();
   };
 
   Tafi.prototype._decisionMade = function (e, decision, keepFocus) {
@@ -413,6 +415,13 @@
   Tafi.prototype._inputFocus = function (e) {
     var $choiceList = $(e.currentTarget).parent();
     this.showDecisionChoices($choiceList);
+
+    // The input won't have :focus until this event has finished.
+    setTimeout($.proxy(function () { this.repaint(); }, this), 0);
+  };
+
+  Tafi.prototype._inputBlur = function () {
+    this.repaint();
   };
 
   Tafi.prototype._inputKeyup = function () {
