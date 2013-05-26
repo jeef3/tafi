@@ -28,10 +28,14 @@
     this.currentJunction = this._buildJunction();
 
     choicesValues = settings.choicesValues;
-    for (i = 0, length = choicesValues.length; i < length; i++) {
-      choiceValue = choicesValues[i];
+    if (choicesValues) {
+      for (i = 0, length = choicesValues.length; i < length; i++) {
+        choiceValue = choicesValues[i];
 
-      this.makeDecision(choiceValue, false);
+        this.makeDecision(choiceValue, false);
+      }
+    } else {
+      this.redraw();
     }
   }
 
@@ -193,7 +197,6 @@
 
     junction = this._buildJunction();
 
-    // TODO: How to skip implicit decisions (e.g.: separator) and just delete the thing before it?
     for (i = 0, length = this.decisions.length; i < length; i++) {
       decision = this.decisions[i];
 
