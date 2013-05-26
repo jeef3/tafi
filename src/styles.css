@@ -38,7 +38,7 @@
 .tafi__option-choices > li {
     white-space: nowrap;
 }
-.tafi__option-choices--active {
+.tafi__option-choice--active {
     font-weight: bold;
 }
 .tafi__decision-show-options .tafi__option-choices { display: block; }

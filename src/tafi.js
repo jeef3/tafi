@@ -22,8 +22,8 @@
     this.partials = settings.partials || {};
     this.decisions = [];
 
-    this.selectedChoiceIndex = -1;
-    this.activeChoice = null;
+    this.$activeDecision = $();
+    this.activeChoiceIndex = -1;
 
     this.currentJunction = this._buildJunction();
 
@@ -93,8 +93,14 @@
   };
 
   Tafi.prototype.redraw = function () {
-    this._updateInput();
+    this._redrawInput();
     this._redrawDecisions();
+
+    this.repaint();
+  };
+
+  Tafi.prototype.repaint = function () {
+    this._repaintActiveChoice();
   };
 
   Tafi.prototype._redrawDecisions = function () {
@@ -108,7 +114,7 @@
     }
   };
 
-  Tafi.prototype._updateInput = function () {
+  Tafi.prototype._redrawInput = function () {
     var option = this.options[this.currentJunction.option];
 
     this.$input.attr("placeholder", option.title);
@@ -126,6 +132,8 @@
         .remove()
         .end()
       .append($currentChoiceList);
+
+    this._repaintActiveChoice();
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
@@ -133,6 +141,7 @@
 
     this._hideChoices();
 
+    this.$activeDecision = $decision;
     $decision.addClass("tafi__decision-show-options");
   };
 
@@ -153,6 +162,8 @@
 
     this.decisions.push(decision);
     this.currentJunction = nextJunction;
+
+    this.activeChoiceIndex = 0;
 
     this.$container.trigger("makedecision", [decision, keepFocus]);
 
@@ -200,15 +211,27 @@
   };
 
   Tafi.prototype.moveSelectionUp = function () {
+    this.activeChoiceIndex -= 1;
 
+    if (this.activeChoiceIndex < 0) this.activeChoiceIndex = 0;
+
+    this._repaintActiveChoice();
   };
 
   Tafi.prototype.moveSelectionDown = function () {
+    var choiceCount = this.$activeDecision.find(".tafi__option-choice").length - 1;
+    this.activeChoiceIndex += 1;
 
+    if (this.activeChoiceIndex > choiceCount) this.activeChoiceIndex = choiceCount;
+
+    this._repaintActiveChoice();
   };
 
   Tafi.prototype.selectedChoice = function () {
-
+    return this.$activeDecision
+      .find(".tafi__option-choice")
+      .eq(this.activeChoiceIndex)
+      .data("tafi__choice-value");
   };
 
   Tafi.prototype.set = function (option, value) {
@@ -321,6 +344,15 @@
     return $optionChoices;
   };
 
+  Tafi.prototype._repaintActiveChoice = function () {
+    this.$container.find(".tafi__option-choice--active")
+      .removeClass("tafi__option-choice--active");
+
+    this.$activeDecision.find(".tafi__option-choice")
+      .eq(this.activeChoiceIndex)
+      .addClass("tafi__option-choice--active");
+  };
+
 
   //
   // Events
@@ -346,7 +378,8 @@
   };
 
   Tafi.prototype._choiceMouseover = function (e) {
-    this._setActiveChoice($(e.currentTarget));
+    this.activeChoiceIndex = $(e.currentTarget).index();
+    this._repaintActiveChoice();
   };
 
   Tafi.prototype._decisionMade = function (e, decision, keepFocus) {
