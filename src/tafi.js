@@ -17,7 +17,7 @@
     this.initElements($element);
     this.initEvents();
 
-    this.options = _rehydrateOptions(settings.options);
+    this.options = this._rehydrateOptions(settings.options);
     this.path = settings.path;
     this.partials = settings.partials || {};
     this.decisions = [];
@@ -25,7 +25,7 @@
     this.selectedChoiceIndex = -1;
     this.activeChoice = null;
 
-    this.currentJunction = _buildJunction.call(this);
+    this.currentJunction = this._buildJunction();
 
     choicesValues = settings.choicesValues;
     for (i = 0, length = choicesValues.length; i < length; i++) {
@@ -77,19 +77,19 @@
   Tafi.prototype.initEvents = function () {
 
     $(document)
-      .on("click", $.proxy(_documentClick, this));
+      .on("click", $.proxy(this._documentClick, this));
 
     this.$container
-      .on("click", ".tafi__decision", $.proxy(_decisionClicked, this))
-      .on("click", ".tafi__option-choice", $.proxy(_choiceClicked, this))
-      .on("mouseover", ".tafi__option-choice", $.proxy(_choiceMouseover, this))
-      .on("makedecision", $.proxy(_decisionMade, this))
-      .on("deletedecision", $.proxy(_decisionDeleted, this));
+      .on("click", ".tafi__decision", $.proxy(this._decisionClicked, this))
+      .on("click", ".tafi__option-choice", $.proxy(this._choiceClicked, this))
+      .on("mouseover", ".tafi__option-choice", $.proxy(this._choiceMouseover, this))
+      .on("makedecision", $.proxy(this._decisionMade, this))
+      .on("deletedecision", $.proxy(this._decisionDeleted, this));
 
     this.$input
-      .on("focus", $.proxy(_inputFocus, this))
-      .on("keyup", $.proxy(_inputKeyup, this))
-      .on("keydown", $.proxy(_inputKeydown, this));
+      .on("focus", $.proxy(this._inputFocus, this))
+      .on("keyup", $.proxy(this._inputKeyup, this))
+      .on("keydown", $.proxy(this._inputKeydown, this));
   };
 
   Tafi.prototype.redraw = function () {
@@ -104,7 +104,7 @@
     this.$container.find(".tafi__decision").remove();
 
     for (length = this.decisions.length - 1, i = length; i > -1; i--) {
-      this.$container.prepend(_buildDecision(this.decisions[i]));
+      this.$container.prepend(this._buildDecision(this.decisions[i]));
     }
   };
 
@@ -119,7 +119,7 @@
   Tafi.prototype._updateCurrentChoices = function () {
     var option = this.options[this.currentJunction.option],
       filter = this.$input.val(),
-      $currentChoiceList = _buildOptionChoicesList.call(this, option, filter);
+      $currentChoiceList = this._buildOptionChoicesList(option, filter);
 
     this.$nextDecision
       .find(".tafi__option-choices")
@@ -144,7 +144,7 @@
 
   Tafi.prototype.makeDecision = function (choiceValue, keepFocus) {
     var option = this.options[this.currentJunction.option],
-      nextJunction = _getNextJunction.call(this, this.currentJunction.branches, choiceValue),
+      nextJunction = this._getNextJunction(this.currentJunction.branches, choiceValue),
       nextOption = this.options[nextJunction.option],
       decision = { option: option, choice: option.findChoice(choiceValue) },
       onlyOption;
@@ -176,13 +176,13 @@
 
     this.decisions = this.decisions.slice(0, removeTo);
 
-    junction = _buildJunction.call(this);
+    junction = this._buildJunction();
 
     // TODO: How to skip implicit decisions (e.g.: separator) and just delete the thing before it?
     for (i = 0, length = this.decisions.length; i < length; i++) {
       decision = this.decisions[i];
 
-      junction = _getNextJunction.call(this, junction.branches, decision.choice.value || decision.choice);
+      junction = this._getNextJunction(junction.branches, decision.choice.value || decision.choice);
     }
 
     this.currentJunction = junction;
@@ -219,7 +219,7 @@
   //
   // Private
 
-  var _rehydrateOptions = function (optionsData) {
+  Tafi.prototype._rehydrateOptions = function (optionsData) {
     var options = {};
 
     $.each(optionsData, function (name, option) {
@@ -229,7 +229,7 @@
     return options;
   };
 
-  var _buildJunction = function (junctionRoot) {
+  Tafi.prototype._buildJunction = function (junctionRoot) {
     var junction;
 
     if (!junctionRoot) {
@@ -245,7 +245,7 @@
     return junction;
   };
 
-  var _getNextJunction = function (branches, choice) {
+  Tafi.prototype._getNextJunction = function (branches, choice) {
     var junctionRoot;
 
     $.each(branches, function (choiceValue, junction) {
@@ -263,10 +263,10 @@
       throw new Error("No path found for " + choice);
     }
 
-    return _buildJunction.call(this, junctionRoot);
+    return this._buildJunction(junctionRoot);
   };
 
-  var _buildDecision = function (decision) {
+  Tafi.prototype._buildDecision = function (decision) {
     var option = decision.option,
       choice = decision.choice,
       $inner = $("<span />"),
@@ -288,12 +288,12 @@
 
     $decision
       .append($inner)
-      .append(_buildOptionChoicesList(option));
+      .append(this._buildOptionChoicesList(option));
 
     return $decision;
   };
 
-  var _buildOptionChoicesList = function (option, filter) {
+  Tafi.prototype._buildOptionChoicesList = function (option, filter) {
     var $optionChoices;
 
     if (!option.choices) return $();
@@ -325,7 +325,7 @@
   //
   // Events
 
-  var _documentClick = function (e) {
+  Tafi.prototype._documentClick = function (e) {
     if (!$(e.target).closest('.tafi__option-choices').length &&
       !$.contains(this.$container.get(0), e.target)) {
 
@@ -333,43 +333,43 @@
     }
   };
 
-  var _decisionClicked = function (e) {
+  Tafi.prototype._decisionClicked = function (e) {
     // Set the active decision as the clicked one
 
     // display the option choices
     this.showDecisionChoices($(e.currentTarget));
   };
 
-  var _choiceClicked = function (e) {
+  Tafi.prototype._choiceClicked = function (e) {
     var choiceValue = $(e.currentTarget).data("tafi__choice-value");
     this.makeDecision(choiceValue, true);
   };
 
-  var _choiceMouseover = function (e) {
+  Tafi.prototype._choiceMouseover = function (e) {
     this._setActiveChoice($(e.currentTarget));
   };
 
-  var _decisionMade = function (e, decision, keepFocus) {
+  Tafi.prototype._decisionMade = function (e, decision, keepFocus) {
     this.$input.val("");
     this.redraw();
 
     if (keepFocus) this.$input.focus();
   };
 
-  var _decisionDeleted = function () {
+  Tafi.prototype._decisionDeleted = function () {
     this.redraw();
   };
 
-  var _inputFocus = function (e) {
+  Tafi.prototype._inputFocus = function (e) {
     var $choiceList = $(e.currentTarget).parent();
     this.showDecisionChoices($choiceList);
   };
 
-  var _inputKeyup = function (e) {
+  Tafi.prototype._inputKeyup = function (e) {
     this._updateCurrentChoices();
   };
 
-  var _inputKeydown = function (e) {
+  Tafi.prototype._inputKeydown = function (e) {
     switch (e.which) {
       // Backspace/Delete
       case 8: if (e.currentTarget.selectionStart === 0) this.deleteDecision(); break;
