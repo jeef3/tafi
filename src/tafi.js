@@ -28,7 +28,7 @@
     this.currentJunction = this._buildJunction();
 
     choicesValues = settings.choicesValues;
-    if (choicesValues) {
+    if (choicesValues && choicesValues.length) {
       for (i = 0, length = choicesValues.length; i < length; i++) {
         choiceValue = choicesValues[i];
 
