@@ -318,7 +318,9 @@
   // Events
 
   var _documentClick = function (e) {
-//    this._hideChoices();
+    if (!$.contains(this.$container.get(0), e.target)) {
+      this._hideChoices();
+    }
   };
 
   var _decisionClick = function (e) {
