@@ -182,8 +182,10 @@
     if (!nextOption.choices ||
         $.map(nextOption.choices, function (n, i) { return i; }).length === 1) {
 
-      onlyOption = nextJunction.branches["*"];
-      this.makeDecision(onlyOption, keepFocus);
+      if (nextJunction.branches) {
+        onlyOption = nextJunction.branches["*"];
+        this.makeDecision(onlyOption, keepFocus);
+      } // No branches, end of the road
     }
   };
 
@@ -194,16 +196,16 @@
       junction,
       i,
       length,
-      decision;
+      d;
 
     this.decisions = this.decisions.slice(0, removeTo);
 
     junction = this._buildJunction();
 
     for (i = 0, length = this.decisions.length; i < length; i++) {
-      decision = this.decisions[i];
+      d = this.decisions[i];
 
-      junction = this._getNextJunction(junction.branches, decision.choice.value || decision.choice);
+      junction = this._getNextJunction(junction.branches, d.choice.value || d.choice);
     }
 
     this.currentJunction = junction;
@@ -288,6 +290,7 @@
         junctionRoot = junction;
         return false;
       }
+      return true;
     });
 
     if (!junctionRoot && branches["*"]) {
@@ -311,7 +314,7 @@
       .addClass("tafi__decision")
       .addClass(option.isEditable() ? "tafi__decision--editable" : "tafi__decision--noneditable")
       .data("tafi-option", option.name)
-      .data("tafi-choice", choice.value || choice)
+      .data("tafi-choice", choice.value || choice);
 
     if (option.title && choice.label) {
       $decision.attr("title", "" + option.title + ": " + choice.label);
@@ -412,7 +415,7 @@
     this.showDecisionChoices($choiceList);
   };
 
-  Tafi.prototype._inputKeyup = function (e) {
+  Tafi.prototype._inputKeyup = function () {
     this._updateCurrentChoices();
   };
 
