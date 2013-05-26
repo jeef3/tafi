@@ -1,6 +1,5 @@
 .tafi {
     padding: 3px;
-
     border: solid 1px #ccc;
 }
 .tafi:after {
@@ -9,14 +8,14 @@
     clear: both;
 }
 
-.tafi-decision,
-.tafi-next-decision {
+.tafi__decision,
+.tafi__next-decision {
     position: relative;
     float: left;
 }
 
-.tafi-input,
-.tafi-input:focus {
+.tafi__input,
+.tafi__input:focus {
     padding: 0;
     margin: 0;
 
@@ -25,7 +24,7 @@
     outline: none;
 }
 
-.tafi-option-choices {
+.tafi__option-choices {
     position: absolute;
     display: none;
     padding: 0;
@@ -36,7 +35,10 @@
     background: white;
     border: solid 1px #ccc;
 }
-.tafi-option-choices > li {
+.tafi__option-choices > li {
     white-space: nowrap;
 }
-.tafi-decision-show-options .tafi-option-choices { display: block; }
+.tafi__option-choices--active {
+    font-weight: bold;
+}
+.tafi__decision-show-options .tafi__option-choices { display: block; }

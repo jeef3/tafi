@@ -23,6 +23,7 @@
     this.decisions = [];
 
     this.selectedChoiceIndex = -1;
+    this.activeChoice = null;
 
     this.currentJunction = _buildJunction.call(this);
 
@@ -48,7 +49,7 @@
 
     // Visible Input
     this.$nextDecision = $("<div />", {
-      "class": "tafi-next-decision"
+      "class": "tafi__next-decision"
     });
 
     this.$input = $("<input />", {
@@ -56,7 +57,7 @@
       type: "text",
       placeholder: $element.attr("placeholder"),
       required: $element.prop("required"),
-      "class": "tafi-input"
+      "class": "tafi__input"
     });
     this.$nextDecision.append(this.$input);
 
@@ -79,8 +80,9 @@
       .on("click", $.proxy(_documentClick, this));
 
     this.$container
-      .on("click", ".tafi-decision", $.proxy(_decisionClick, this))
-      .on("click", ".tafi-option-choice", $.proxy(_choiceClick, this))
+      .on("click", ".tafi__decision", $.proxy(_decisionClicked, this))
+      .on("click", ".tafi__option-choice", $.proxy(_choiceClicked, this))
+      .on("mouseover", ".tafi__option-choice", $.proxy(_choiceMouseover, this))
       .on("makedecision", $.proxy(_decisionMade, this))
       .on("deletedecision", $.proxy(_decisionDeleted, this));
 
@@ -99,7 +101,7 @@
     var i,
       length;
 
-    this.$container.find(".tafi-decision").remove();
+    this.$container.find(".tafi__decision").remove();
 
     for (length = this.decisions.length - 1, i = length; i > -1; i--) {
       this.$container.prepend(_buildDecision(this.decisions[i]));
@@ -120,24 +122,24 @@
       $currentChoiceList = _buildOptionChoicesList.call(this, option, filter);
 
     this.$nextDecision
-      .find(".tafi-option-choices")
+      .find(".tafi__option-choices")
         .remove()
         .end()
       .append($currentChoiceList);
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
-    if ($decision.hasClass("tafi-decision-show-options")) return;
+    if ($decision.hasClass("tafi__decision-show-options")) return;
 
     this._hideChoices();
 
-    $decision.addClass("tafi-decision-show-options");
+    $decision.addClass("tafi__decision-show-options");
   };
 
   Tafi.prototype._hideChoices = function () {
     this.$container
-      .find(".tafi-decision, .tafi-next-decision")
-      .removeClass("tafi-decision-show-options");
+      .find(".tafi__decision, .tafi__next-decision")
+      .removeClass("tafi__decision-show-options");
   };
 
   Tafi.prototype.makeDecision = function (choiceValue, keepFocus) {
@@ -271,17 +273,17 @@
       $decision = $("<div />");
 
     $decision
-      .addClass("tafi-decision")
-      .addClass(option.isEditable() ? "tafi-editable-decision" : "tafi-noneditable-decision")
-      .data("tafi-option", option.name)
-      .data("tafi-choice", choice.value || choice)
+      .addClass("tafi__decision")
+      .addClass(option.isEditable() ? "tafi__editable-decision" : "tafi__noneditable-decision")
+      .data("tafi__option", option.name)
+      .data("tafi__choice", choice.value || choice)
 
     if (option.title && choice.label) {
       $decision.attr("title", "" + option.title + ": " + choice.label);
     }
 
     $inner
-      .addClass("tafi-decision-text")
+      .addClass("tafi__decision-text")
       .text(choice.text || choice);
 
     $decision
@@ -296,7 +298,7 @@
 
     if (!option.choices) return $();
 
-    $optionChoices = $("<ul />", { "class": "tafi-option-choices" });
+    $optionChoices = $("<ul />", { "class": "tafi__option-choices" });
 
     // TODO: Take an optional class value from dev? e.g.: dropdown-menu
     // $optionChoices.addClass(settings.optionChoicesClass);
@@ -309,8 +311,8 @@
         choice.label.toLowerCase().indexOf(filter.toLowerCase()) !== 0) return;
 
       $li
-        .data("tafi-choice-value", choice.value)
-        .addClass("tafi-option-choice")
+        .data("tafi__choice-value", choice.value)
+        .addClass("tafi__option-choice")
         .append($("<a />").text(choice.label));
 
       $optionChoices.append($li);
@@ -324,23 +326,27 @@
   // Events
 
   var _documentClick = function (e) {
-    if (!$(e.target).closest('.tafi-option-choices').length &&
+    if (!$(e.target).closest('.tafi__option-choices').length &&
       !$.contains(this.$container.get(0), e.target)) {
 
       this._hideChoices();
     }
   };
 
-  var _decisionClick = function (e) {
+  var _decisionClicked = function (e) {
     // Set the active decision as the clicked one
 
     // display the option choices
     this.showDecisionChoices($(e.currentTarget));
   };
 
-  var _choiceClick = function (e) {
-    var choiceValue = $(e.currentTarget).data("tafi-choice-value");
+  var _choiceClicked = function (e) {
+    var choiceValue = $(e.currentTarget).data("tafi__choice-value");
     this.makeDecision(choiceValue, true);
+  };
+
+  var _choiceMouseover = function (e) {
+    this._setActiveChoice($(e.currentTarget));
   };
 
   var _decisionMade = function (e, decision, keepFocus) {
