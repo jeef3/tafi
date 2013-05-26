@@ -286,8 +286,7 @@
   };
 
   var _buildOptionChoicesList = function (option, filter) {
-    var $optionChoices,
-      regex = filter ? new RegExp(filter, "ig") : null;
+    var $optionChoices;
 
     if (!option.choices) return $();
 
@@ -299,13 +298,12 @@
     $.each(option.choices, function (index, choice) {
       var $li = $("<li />", { role: "button" });
 
-//      if (regex && choice.label.search(regex) === -1) return;
-      if (regex && choice.label.toLowerCase().indexOf(filter) !== 0) return;
+      if (filter && choice.label.toLowerCase().indexOf(filter.toLowerCase()) !== 0) return;
 
       $li
         .data("tafi-choice-value", choice.value)
         .addClass("tafi-option-choice")
-        .append($("<span />").text(choice.label));
+        .append($("<a />").text(choice.label));
 
       $optionChoices.append($li);
     });
