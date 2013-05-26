@@ -23,7 +23,7 @@
     this.decisions = [];
 
     this.$activeDecision = $();
-    this.activeChoiceIndex = -1;
+    this.activeChoiceIndex = 0;
 
     this.currentJunction = this._buildJunction();
 
@@ -45,7 +45,6 @@
     this.$container
       .addClass("tafi")
       .data("tafi", this);
-
 
     // Visible Input
     this.$nextDecision = $("<div />", {
@@ -78,6 +77,9 @@
 
     $(document)
       .on("click", $.proxy(this._documentClick, this));
+
+    $("[for='" + this.$container.attr("id") + "']")
+      .on("click", $.proxy(function () { this.$input.focus() }, this));
 
     this.$container
       .on("click", ".tafi__decision", $.proxy(this._decisionClicked, this))
@@ -143,6 +145,7 @@
 
     this.$activeDecision = $decision;
     $decision.addClass("tafi__decision-show-options");
+    this._repaintActiveChoice();
   };
 
   Tafi.prototype._hideChoices = function () {
@@ -197,6 +200,8 @@
     }
 
     this.currentJunction = junction;
+
+    this.activeChoiceIndex = 0;
 
     this.$container.trigger("deletedecision", removed);
 
@@ -358,7 +363,8 @@
   // Events
 
   Tafi.prototype._documentClick = function (e) {
-    if (!$(e.target).closest('.tafi__option-choices').length &&
+    if (!this.$input.is(":focus") &&
+      !$(e.target).closest('.tafi__option-choices').length &&
       !$.contains(this.$container.get(0), e.target)) {
 
       this._hideChoices();
