@@ -119,6 +119,7 @@
   Tafi.prototype._redrawInput = function () {
     var option = this.options[this.currentJunction.option];
 
+    this.$input.val(option.default);
     this.$input.attr("placeholder", option.title);
 
     this._updateCurrentChoices();
