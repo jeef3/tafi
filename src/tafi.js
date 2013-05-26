@@ -4,6 +4,8 @@
  *
  * Copyright (c) 2013 Jeff Knaggs
  * Licensed under the MIT license.
+ *
+ * TODO: Have a 'end' state, so we can accept 'enter' for submit and update the final decision
  */
 
 (function($) {
@@ -13,9 +15,6 @@
       length,
       choicesValues,
       choiceValue;
-
-    this.initElements($element);
-    this.initEvents();
 
     this.classes = settings.classes || {};
     this.options = this._rehydrateOptions(settings.options);
@@ -27,6 +26,9 @@
     this.activeChoiceIndex = 0;
 
     this.currentJunction = this._buildJunction();
+
+    this.initElements($element);
+    this.initEvents();
 
     choicesValues = settings.choicesValues;
     if (choicesValues && choicesValues.length) {
@@ -41,6 +43,7 @@
   }
 
   Tafi.prototype.initElements = function ($element) {
+    var hiddens;
 
     // Container
     this.$container = $("<div />", {
@@ -71,9 +74,19 @@
       name: $element.attr("name")
     });
 
+    // Hidden Inputs (one per option)
+    hiddens = [];
+    $.each(this.options, function (name) {
+      hiddens.push($("<input />", {
+        type: "hidden",
+        name: name
+      }));
+    });
+
     this.$container
       .append(this.$nextDecision)
-      .append(this.$hidden);
+      .append(this.$hidden)
+      .append(hiddens);
 
     $element.replaceWith(this.$container);
   };
@@ -402,13 +415,23 @@
   };
 
   Tafi.prototype._decisionMade = function (e, decision, keepFocus) {
+    var choice = typeof decision.choice === "string" ? decision.choice : decision.choice.value;
+
     this.$input.val("");
+    this.$container
+      .find("input[name='" + decision.option.name + "']")
+      .val(choice);
+
     this.redraw();
 
     if (keepFocus) this.$input.focus();
   };
 
-  Tafi.prototype._decisionDeleted = function () {
+  Tafi.prototype._decisionDeleted = function (e, removed) {
+    this.$container
+      .find("input[name='" + removed.option.name + "']")
+      .val(null);
+
     this.redraw();
   };
 
