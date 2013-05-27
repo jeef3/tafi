@@ -96,6 +96,9 @@
     $(document)
       .on("click", $.proxy(this._documentClick, this));
 
+    $(window)
+      .on("resize", $.proxy(this._windowResized, this))
+
     $("[for='" + this.$container.attr("id") + "']")
       .on("click", $.proxy(function () { this.$input.focus() }, this));
 
@@ -163,13 +166,17 @@
   };
 
   Tafi.prototype._calculateInputWidth = function () {
-    var spaceAvailable = this.$container.width();
+    var spaceAvailable = this.$container.width(),
+      $decisions = this.$container.find(".tafi__decision"),
+      $nextDecision = this.$container.find(".tafi__next-decision");
 
-    this.$container.find(".tafi__decision").each(function () {
+    spaceAvailable -= ($nextDecision.outerWidth(true) - $nextDecision.width());
+
+    $decisions.each(function () {
       spaceAvailable -= $(this).outerWidth(true);
     });
 
-    this.$container.find(".tafi__next-decision").width(spaceAvailable);
+    $nextDecision.width(spaceAvailable);
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
@@ -407,6 +414,10 @@
       this._hideChoices();
       this.repaint();
     }
+  };
+
+  Tafi.prototype._windowResized = function (e) {
+    this._calculateInputWidth();
   };
 
   Tafi.prototype._decisionClicked = function (e) {

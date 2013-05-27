@@ -12,6 +12,8 @@
 .tafi__next-decision {
     position: relative;
     float: left;
+    margin: 0 1px;
+    padding: 0 1px;
 }
 
 .tafi__input,
@@ -23,6 +25,8 @@
     font: inherit;
     border: none;
     outline: none;
+
+    background: limegreen;
 }
 
 .tafi__option-choices {
