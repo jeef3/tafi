@@ -97,7 +97,7 @@
       .on("click", $.proxy(this._documentClick, this));
 
     $(window)
-      .on("resize", $.proxy(this._windowResized, this))
+      .on("resize", $.proxy(this._windowResized, this));
 
     $("[for='" + this.$container.attr("id") + "']")
       .on("click", $.proxy(function () { this.$input.focus() }, this));
@@ -108,6 +108,9 @@
       .on("mouseover", ".tafi__option-choice", $.proxy(this._choiceMouseover, this))
       .on("makedecision", $.proxy(this._decisionMade, this))
       .on("deletedecision", $.proxy(this._decisionDeleted, this));
+
+    this.$container.closest("form")
+      .on("reset", $.proxy(this.reset, this));
 
     this.$input
       .on("focus", $.proxy(this._inputFocus, this))
@@ -224,7 +227,7 @@
 
   Tafi.prototype.deleteDecision = function (decision) {
     var index = this.decisions.indexOf(decision),
-      removeTo = index === -1 ? - 1 : (this.decisions.length),
+      removeTo = index === -1 ? -1 : (index - this.decisions.length),
       removed = this.decisions.slice(index),
       junction,
       i,
@@ -254,7 +257,9 @@
   };
 
   Tafi.prototype.reset = function () {
-    // Clear all and return to start
+    this.deleteDecision(this.decisions[0]);
+
+    this.redraw();
   };
 
   Tafi.prototype.moveSelectionUp = function () {
@@ -421,14 +426,19 @@
   };
 
   Tafi.prototype._decisionClicked = function (e) {
-    // Set the active decision as the clicked one
-
     // display the option choices
     this.showDecisionChoices($(e.currentTarget));
   };
 
   Tafi.prototype._choiceClicked = function (e) {
-    var choiceValue = $(e.currentTarget).data("tafi-choice-value");
+    var choiceValue = $(e.currentTarget).data("tafi-choice-value"),
+      option = $(e.currentTarget).closest(".tafi__decision"),
+      decisionIndex = this.$container.find(".tafi__decision").index(option);
+
+    if (decisionIndex > -1 && decisionIndex < this.decisions.length) {
+      this.deleteDecision(this.decisions[decisionIndex]);
+    }
+
     this.makeDecision(choiceValue, true);
   };
 
