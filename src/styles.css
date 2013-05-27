@@ -12,8 +12,9 @@
 .tafi__next-decision {
     position: relative;
     float: left;
-    margin: 0 1px;
-    padding: 0 1px;
+    margin: 0 2px;
+    padding: 0 3px;
+    border: solid 2px black;
 }
 
 .tafi__input,

@@ -176,7 +176,7 @@
       spaceAvailable -= $(this).outerWidth(true);
     });
 
-    $nextDecision.width(spaceAvailable);
+    $nextDecision.width(spaceAvailable - 1);
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
