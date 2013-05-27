@@ -257,7 +257,8 @@
   };
 
   Tafi.prototype.reset = function () {
-    this.deleteDecision(this.decisions[0]);
+    if (this.decisions && this.decisions.length)
+      this.deleteDecision(this.decisions[0]);
 
     this.redraw();
   };
