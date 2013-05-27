@@ -124,6 +124,8 @@
     this.$container.toggleClass("tafi--with-focus", this.$input.is(":focus"));
 
     this._repaintActiveChoice();
+
+    this._calculateInputWidth();
   };
 
   Tafi.prototype._redrawDecisions = function () {
@@ -158,6 +160,16 @@
       .append($currentChoiceList);
 
     this.repaint();
+  };
+
+  Tafi.prototype._calculateInputWidth = function () {
+    var spaceAvailable = this.$container.width();
+
+    this.$container.find(".tafi__decision").each(function () {
+      spaceAvailable -= $(this).outerWidth(true);
+    });
+
+    this.$container.find(".tafi__next-decision").width(spaceAvailable);
   };
 
   Tafi.prototype.showDecisionChoices = function ($decision) {
